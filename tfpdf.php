@@ -534,7 +534,7 @@ function AddFont($family, $style='', $file='', $uni=false)
 			$s.='$fontkey=\''.$fontkey."';\n";
 			$s.="?>";
 			if (is_writable(dirname($this->_getfontpath().'unifont/'.'x'))) {
-				$fh = fopen($unifilename.'.mtx.php',"w");
+				$fh = fopen($unifilename.'.mtx.php',"w");
 				fwrite($fh,$s,strlen($s));
 				fclose($fh);
 				$fh = fopen($unifilename.'.cw.dat',"wb");
@@ -613,7 +613,8 @@ function SetFont($family, $style='', $size=0)
 		// Test if one of the core fonts
 		if($family=='arial')
 			$family = 'helvetica';
-		if(in_array($family,$this->CoreFonts))
+		if(in_array($family,$this->CoreFonts) ||
+            array_key_exists($family, $this->FontFiles))
 		{
 			if($family=='symbol' || $family=='zapfdingbats')
 				$style = '';
@@ -621,7 +622,7 @@ function SetFont($family, $style='', $size=0)
 			if(!isset($this->fonts[$fontkey]))
 				$this->AddFont($family,$style);
 		}
-		else
+        else
 			$this->Error('Undefined font: '.$family.' '.$style);
 	}
 	// Select it
@@ -1990,7 +1991,8 @@ function _putTTfontwidths(&$font, $maxUni) {
 
 	// for each character
 	for ($cid=$startcid; $cid<$cwlen; $cid++) {
-		if ($cid==128 && (!file_exists($font['unifilename'].'.cw127.php'))) {
+		if ($cid==128 && !isset($font['omit_cw127']) &&
+            (!file_exists($font['unifilename'].'.cw127.php'))) {
 			if (is_writable(dirname($this->_getfontpath().'unifont/x'))) {
 				$fh = fopen($font['unifilename'].'.cw127.php',"wb");
 				$cw127='<?php'."\n";

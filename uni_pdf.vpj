@@ -1,0 +1,132 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+    Version="10.0"
+    VendorName="SlickEdit"
+    TemplateName="PHP"
+    WorkingDir=".">
+    <Config
+        Name="Debug"
+        DebugCallbackName="xdebug"
+        Type="php"
+        OutputFile=""
+        CompilerConfigName="">
+        <Menu>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                Dialog="_php_options_form Run"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw"
+                Deletable="0">
+                <Exec
+                    CmdLine="php_execute %(SLICKEDIT_PHP_EXECUTE_ARGS)"
+                    Type="Slick-C"/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                Dialog="_php_options_form Debug"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveNone"
+                RunFromDir="%rw"
+                Deletable="0">
+                <Exec
+                    CmdLine="php_debug"
+                    Type="Slick-C"/>
+            </Target>
+            <Target
+                Name="PHP Options"
+                MenuCaption="PHP &amp;Options"
+                ShowOnMenu="HideIfNoCmdLine"
+                Deletable="0">
+                <Exec
+                    CmdLine="phpoptions"
+                    Type="Slick-C"/>
+            </Target>
+        </Menu>
+        <List Name="PHP Options">
+            <Item
+                Name="AppType"
+                Value="web-local"/>
+            <Item
+                Name="DefaultFile"
+                Value=""/>
+            <Item
+                Name="ScriptArguments"
+                Value=""/>
+            <Item
+                Name="InterpreterArguments"
+                Value=""/>
+            <List Name="Map">
+                <Item
+                    Name="RemoteUrl"
+                    Value="http://localhost"/>
+                <Item
+                    Name="LocalRoot"
+                    Value="/home/dougs/git/uni_pdf/"/>
+            </List>
+        </List>
+        <List Name="Xdebug Options">
+            <Item
+                Name="ServerHost"
+                Value="127.0.0.1"/>
+            <Item
+                Name="ServerPort"
+                Value="9000"/>
+            <Item
+                Name="ListenInBackground"
+                Value="1"/>
+            <Item
+                Name="StayInDebugger"
+                Value="1"/>
+            <Item
+                Name="AcceptConnections"
+                Value="prompt"/>
+            <Item
+                Name="BreakInSession"
+                Value="step-into"/>
+            <Item
+                Name="show_hidden"
+                Value="1"/>
+            <List Name="Map">
+                <Item
+                    Name="RemoteRoot"
+                    Value="/home/dougs/git/uni_pdf/"/>
+                <Item
+                    Name="LocalRoot"
+                    Value="/home/dougs/git/uni_pdf/"/>
+            </List>
+        </List>
+    </Config>
+    <Files AutoFolders="DirectoryView">
+        <Folder Name="font">
+            <Folder Name="unifont">
+                <F N="font/unifont/DejaVu_LICENSE.txt"/>
+                <F N="font/unifont/dejavusanscondensed.cw127.php"/>
+                <F N="font/unifont/dejavusanscondensed.mtx.php"/>
+            </Folder>
+            <F N="font/courier.php"/>
+            <F N="font/courierb.php"/>
+            <F N="font/courierbi.php"/>
+            <F N="font/courieri.php"/>
+            <F N="font/helvetica.php"/>
+            <F N="font/helveticab.php"/>
+            <F N="font/helveticabi.php"/>
+            <F N="font/helveticai.php"/>
+            <F N="font/symbol.php"/>
+            <F N="font/times.php"/>
+            <F N="font/timesb.php"/>
+            <F N="font/timesbi.php"/>
+            <F N="font/timesi.php"/>
+            <F N="font/zapfdingbats.php"/>
+        </Folder>
+        <F N="example.php"/>
+        <F N="HelloWorld.txt"/>
+        <F N="info.htm"/>
+        <F N="README.txt"/>
+        <F N="tfpdf.php"/>
+        <F N="ttfonts.php"/>
+        <F N="uni_pdf.php"/>
+    </Files>
+</Project>

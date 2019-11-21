@@ -30,6 +30,7 @@ class UniPdf extends tFPDF
         parent::__construct($orientation, $units, $page_size);
     }
 
+    // Add a true-type unicode font
     function AddFontUnicode($family, $style, $font_dir_path, $font_file_name)
     {
         $family = strtolower($family);
@@ -110,6 +111,89 @@ class UniPdf extends tFPDF
                 "FontFiles: $ff\n");
         }
 
-        return(true);
+        return true;
+    }
+
+    // Get width of a string in the current font
+    function GetStringWidth($str)
+    {
+        $str = (string)$str;
+        $char_widths = &$this->CurrentFont["cw"];
+        $width = 0;
+        $unicode = $this->UTF8StringToArray($str);
+
+        foreach ($unicode as $char) 
+        {
+            if (isset($char_widths[$char])) 
+            { 
+                // Extract big-endian uint_16:
+                $width += (ord($char_widths[2 * $char]) << 8) + 
+                    ord($char_widths[2 * $char + 1]); 
+            }
+            else if ($char > 0 && $char < 128 && 
+                isset($char_widths[chr($char)])) 
+            { 
+                $width += $char_widths[chr($char)]; 
+            }
+            else if (isset($this->CurrentFont["desc"]["MissingWidth"])) 
+            { 
+                $width += $this->CurrentFont["desc"]["MissingWidth"]; 
+            }
+            else if (isset($this->CurrentFont["MissingWidth"])) 
+            { 
+                $width += $this->CurrentFont["MissingWidth"]; 
+            }
+            else 
+            { 
+                $width += 500; 
+            }
+        }
+
+        return $width * $this->FontSize / 1000;
+    }
+
+    // Converts UTF-8 strings to codepoints array
+    function UTF8StringToArray($str) 
+    {
+        $out = array();
+        $str_length = strlen($str);
+        $i = 0;
+        while ($i < $str_length) 
+        {
+            $code = -1;
+            $h = ord($str[$i++]);
+            if ($h <= 0x7F)
+            {
+                $code = $h;
+            }
+            elseif ($h < 0xC2) 
+            {
+                // null
+            }
+            else if ($h <= 0xDF && $i < $str_length)
+            {
+                $code = ($h & 0x1F) << 6 | 
+                    (ord($str[$i++]) & 0x3F);
+            }
+            elseif ($h <= 0xEF && $i < ($str_length - 1))
+            {
+                $code = ($h & 0x0F) << 12 | 
+                    (ord($str[$i++]) & 0x3F) << 6 |
+                    (ord($str[$i++]) & 0x3F);
+            }
+            elseif ($h <= 0xF4 && $i < ($str_length - 2))
+            {
+                $code = ($h & 0x0F) << 18 | 
+                    (ord($str[$i++]) & 0x3F) << 12 |
+                    (ord($str[$i++]) & 0x3F) << 6 |
+                    (ord($str[$i++]) & 0x3F);
+            }
+
+            if ($code >= 0) 
+            {
+                $out[] = $code;
+            }
+        }
+        return $out;
     }
 }

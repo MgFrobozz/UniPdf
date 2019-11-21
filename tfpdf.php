@@ -429,21 +429,9 @@ function GetStringWidth($s)
 	$s = (string)$s;
 	$cw = &$this->CurrentFont['cw'];
 	$w=0;
-	if ($this->unifontSubset) {
-		$unicode = $this->UTF8StringToArray($s);
-		foreach($unicode as $char) {
-			if (isset($cw[$char])) { $w += (ord($cw[2*$char])<<8) + ord($cw[2*$char+1]); }
-			else if($char>0 && $char<128 && isset($cw[chr($char)])) { $w += $cw[chr($char)]; }
-			else if(isset($this->CurrentFont['desc']['MissingWidth'])) { $w += $this->CurrentFont['desc']['MissingWidth']; }
-			else if(isset($this->CurrentFont['MissingWidth'])) { $w += $this->CurrentFont['MissingWidth']; }
-			else { $w += 500; }
-		}
-	}
-	else {
-		$l = strlen($s);
-		for($i=0;$i<$l;$i++)
-			$w += $cw[$s[$i]];
-	}
+    $l = strlen($s);
+    for($i=0;$i<$l;$i++)
+        $w += $cw[$s[$i]];
 	return $w*$this->FontSize/1000;
 }
 
@@ -2265,29 +2253,6 @@ function UTF8ToUTF16BE($str, $setbom=true) {
 
 // Converts UTF-8 strings to codepoints array
 function UTF8StringToArray($str) {
-   $out = array();
-   $len = strlen($str);
-   for ($i = 0; $i < $len; $i++) {
-	$uni = -1;
-      $h = ord($str[$i]);
-      if ( $h <= 0x7F )
-         $uni = $h;
-      elseif ( $h >= 0xC2 ) {
-         if ( ($h <= 0xDF) && ($i < $len -1) )
-            $uni = ($h & 0x1F) << 6 | (ord($str[++$i]) & 0x3F);
-         elseif ( ($h <= 0xEF) && ($i < $len -2) )
-            $uni = ($h & 0x0F) << 12 | (ord($str[++$i]) & 0x3F) << 6
-                                       | (ord($str[++$i]) & 0x3F);
-         elseif ( ($h <= 0xF4) && ($i < $len -3) )
-            $uni = ($h & 0x0F) << 18 | (ord($str[++$i]) & 0x3F) << 12
-                                       | (ord($str[++$i]) & 0x3F) << 6
-                                       | (ord($str[++$i]) & 0x3F);
-      }
-	if ($uni >= 0) {
-		$out[] = $uni;
-	}
-   }
-   return $out;
 }
 
 

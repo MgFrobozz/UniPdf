@@ -100,16 +100,4 @@ class UniPdf extends tFPDF
         return $this->_escape($this->UTF8ToUTF16BE($string, false));
     }
 
-    // Get unicode string length, ignoring trailing newlines:
-    protected function GetUnicodeStringLength($string)
-    {
-        $num_bytes = mb_strlen($string, "utf-8");
-        while ($num_bytes > 0 && 
-            mb_substr($string, $num_bytes - 1, 1, "utf-8") == "\n")
-        {
-            --$num_bytes;
-        }
-        return($num_bytes);
-    }
-
 }

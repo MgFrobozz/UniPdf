@@ -887,17 +887,11 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 
 function GetStringLength($txt)
 {
-    if ($this->unifontSubset) 
+    if (!isset($this->fontHandler))
     {
-        $nb = $this->GetUnicodeStringLength($txt);
+        throw new \Exception(__FUNCTION__ . ": no font handler");
     }
-    else
-    {
-        $nb = strlen($s);
-        if($nb>0 && $s[$nb-1]=="\n")
-            $nb--;
-    }
-    return $nb;
+    return $this->fontHandler->GetStringLength($txt);
 }
 
 function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
@@ -2320,12 +2314,6 @@ protected function EscapeUnicodeString($str)
 {
     // Should never get here ...
     return '';
-}
-
-protected function GetUnicodeStringLength($str)
-{
-    // Should never get here ...
-    return 0;
 }
 
 function GetUnicodeSubstring($txt , $start, $length = null)

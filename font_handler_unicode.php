@@ -132,13 +132,10 @@ class FontHandlerUnicode
     {
         $str_len = mb_strlen($string, "utf-8");
         while ($str_len > 0 && 
-            mb_substr($string, $num_bytes - 1, 1, "utf-8") == "\n")
+            mb_substr($string, $str_len - 1, 1, "utf-8") == "\n")
         {
             --$str_len;
         }
-        # debug...
-        # print(__FUNCTION__ . "($string)\n");
-        # ...debug
         return($str_len);
     }
 

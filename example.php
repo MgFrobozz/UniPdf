@@ -6,6 +6,7 @@
 
 require('uni_pdf.php');
 use tFPDF\UniPdf;
+use tFPDF\tfPDF;
 
 // Please update these if you change the content of HelloWorld.txt:
 $src_file_name = 'HelloWorld.txt';
@@ -21,7 +22,7 @@ $pdf = new UniPdf();
 $pdf->AddPage();
 
 // Add a Unicode font (uses UTF-8)
-$pdf->AddFontUnicode("custom", UniPdf::FontItalic, $italic_font_path);
+$pdf->AddFontUnicode("custom", tFPDF::FontItalic, $italic_font_path);
 $pdf->SetFont("custom", UniPdf::FontItalic, 14);
 
 // Load a UTF-8 string from a file and print it

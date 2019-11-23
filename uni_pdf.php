@@ -103,31 +103,13 @@ class UniPdf extends tFPDF
     // Get unicode string length, ignoring trailing newlines:
     protected function GetUnicodeStringLength($string)
     {
-        # debug...
-        # print(__FUNCTION__ . "()\n");
-        # ...debug
         $num_bytes = mb_strlen($string, "utf-8");
         while ($num_bytes > 0 && 
             mb_substr($string, $num_bytes - 1, 1, "utf-8") == "\n")
         {
             --$num_bytes;
         }
-    }
-
-    function GetUnicodeSubstring($string, $start, $length = null)
-    {
-        # debug...
-        # if ($length > 1)
-        if (false)
-        {
-            if ($start == 0)
-            {
-                throw new \Exception(__FUNCTION__);
-            }
-            print(__FUNCTION__ . "($start, $length)\n");
-        }
-        # ...debug
-        return mb_substr($string, $start, $length, "utf-8");
+        return($num_bytes);
     }
 
 }

@@ -18,6 +18,27 @@ require_once __DIR__ . "/font_handler_unicode.php";
 class tFPDF
 {
 
+const AlignLeft = "L";
+const AlignCenter = "C";
+const AlignRight = "R";
+// Stretch to left and right margins:
+const AlignJustify = "J";
+
+const BorderNone = 0;
+const BorderFrame = 1;
+
+const FillNone = false;
+const FillSolid = true;
+
+const FontNormal = "";
+const FontBold = "B";
+const FontItalic = "I";
+const FontBoldItalic = "BI";
+const FontUnderline = "U";
+
+const OrientLandscape = "L";
+const OrientPortrait = "P";
+
 var $unifontSubset;
 var $page;               // current page number
 var $n;                  // current object number
@@ -464,11 +485,13 @@ function Rect($x, $y, $w, $h, $style='')
 	$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->k,($this->h-$y)*$this->k,$w*$this->k,-$h*$this->k,$op));
 }
 
-function GetSubstring($txt, $start, $length = null)
+function GetSubstring($string, $start, $length = null)
 {
-    return ($this->unifontSubset) ? 
-        $this->GetUnicodeSubstring($txt, $start, $length) :
-        substr($txt, $start, $length);
+    if (!isset($this->fontHandler))
+    {
+        throw new \Exception(__FUNCTION__ . ": no font handler");
+    }
+    return $this->fontHandler->GetSubstring($string, $start, $length);
 }
 
 private function GetStyleCanonical($style)
@@ -867,9 +890,6 @@ function GetStringLength($txt)
     if ($this->unifontSubset) 
     {
         $nb = $this->GetUnicodeStringLength($txt);
-        # debug...
-        print(__FUNCTION__ . "() -> $nb\n");
-        # ...debug
     }
     else
     {
@@ -971,6 +991,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 					$this->_out(sprintf('%.3F Tw',$this->ws*$this->k));
 				}
                 $sub = $this->GetSubstring($s,$j,$sep-$j);
+                $this->Cell($w,$h,$sub,$b,2,$align,$fill);
 				$i = $sep+1;
 			}
 			$sep = -1;
@@ -1045,8 +1066,7 @@ function Write($h, $txt, $link='')
 		if($c==' ')
 			$sep = $i;
 
-		if ($this->unifontSubset) { $l += $this->GetStringWidth($c); }
-		else { $l += $cw[$c]*$this->FontSize/1000; }
+		$l += $this->GetStringWidth($c);
 
 		if($l>$wmax)
 		{

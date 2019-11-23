@@ -1,4 +1,6 @@
 <?php
+namespace tFPDF;
+
 /*******************************************************************************
 * tFPDF (based on FPDF 1.7)                                                    *
 *                                                                              *
@@ -9,6 +11,9 @@
 *******************************************************************************/
 
 define('tFPDF_VERSION','1.25');
+
+require_once __DIR__ . "/font_handler.php";
+require_once __DIR__ . "/font_handler_unicode.php";
 
 class tFPDF
 {
@@ -70,6 +75,7 @@ var $keywords;           // keywords
 var $creator;            // creator
 var $AliasNbPages;       // alias for total number of pages
 var $PDFVersion;         // PDF version number
+var $fontHandler;        // FontHandler or variant
 
 /*******************************************************************************
 *                                                                              *
@@ -425,14 +431,11 @@ function SetTextColor($r, $g=null, $b=null)
 
 function GetStringWidth($s)
 {
-	// Get width of a string in the current font
-	$s = (string)$s;
-	$cw = &$this->CurrentFont['cw'];
-	$w=0;
-    $l = strlen($s);
-    for($i=0;$i<$l;$i++)
-        $w += $cw[$s[$i]];
-	return $w*$this->FontSize/1000;
+    if (!isset($this->fontHandler))
+    {
+        throw new Exception(__FUNCTION__ . ": no font handler");
+    }
+    return($this->fontHandler->GetStringWidth($s));
 }
 
 function SetLineWidth($width)
@@ -459,6 +462,13 @@ function Rect($x, $y, $w, $h, $style='')
 	else
 		$op = 'S';
 	$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->k,($this->h-$y)*$this->k,$w*$this->k,-$h*$this->k,$op));
+}
+
+function GetSubstring($txt, $start, $length = null)
+{
+    return ($this->unifontSubset) ? 
+        $this->GetUnicodeSubstring($txt, $start, $length) :
+        substr($txt, $start, $length);
 }
 
 function AddFont($family, $style='', $file='', $uni=false)
@@ -619,8 +629,16 @@ function SetFont($family, $style='', $size=0)
 	$this->FontSizePt = $size;
 	$this->FontSize = $size/$this->k;
 	$this->CurrentFont = &$this->fonts[$fontkey];
-	if ($this->fonts[$fontkey]['type']=='TTF') { $this->unifontSubset = true; }
-	else { $this->unifontSubset = false; }
+	if ($this->fonts[$fontkey]['type']=='TTF') 
+    { 
+        $this->unifontSubset = true; 
+        $fontHandler = new FontHandlerUnicode($this->CurrentFont, $this->FontSize);
+    }
+	else 
+    { 
+        $this->unifontSubset = false; 
+        $fontHandler = new FontHandler($this->CurrentFont, $this->FontSize);
+    }
 	if($this->page>0)
 		$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
 }
@@ -660,17 +678,17 @@ function Link($x, $y, $w, $h, $link)
 	$this->PageLinks[$this->page][] = array($x*$this->k, $this->hPt-$y*$this->k, $w*$this->k, $h*$this->k, $link);
 }
 
+protected function EscapeString($string)
+{
+    return ($this->unifontSubset) ? $this->EscapeUnicodeString($string) : 
+        $this->_escape($string);
+}
+
 function Text($x, $y, $txt)
 {
 	// Output a string
-	if ($this->unifontSubset)
-	{
-		$txt2 = '('.$this->_escape($this->UTF8ToUTF16BE($txt, false)).')';
-		foreach($this->UTF8StringToArray($txt) as $uni)
-			$this->CurrentFont['subset'][$uni] = $uni;
-	}
-	else 
-		$txt2 = '('.$this->_escape($txt).')';
+    $this->SaveUnicodeSubset($txt);
+	$txt2 = '('.$this->EscapeString($txt).')';
 	$s = sprintf('BT %.2F %.2F Td %s Tj ET',$x*$this->k,($this->h-$y)*$this->k,$txt2);
 	if($this->underline && $txt!='')
 		$s .= ' '.$this->_dounderline($x,$y,$txt);
@@ -744,9 +762,8 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 
 		// If multibyte, Tw has no effect - do word spacing using an adjustment before each space
 		if ($this->ws && $this->unifontSubset) {
-			foreach($this->UTF8StringToArray($txt) as $uni)
-				$this->CurrentFont['subset'][$uni] = $uni;
-			$space = $this->_escape($this->UTF8ToUTF16BE(' ', false));
+            $this->SaveUnicodeSubset($txt);
+            $space = $this->EscapeString(' ');
 			$s .= sprintf('BT 0 Tw %.2F %.2F Td [',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k);
 			$t = explode(' ',$txt);
 			$numt = count($t);
@@ -765,9 +782,8 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 		else {
 			if ($this->unifontSubset)
 			{
-				$txt2 = '('.$this->_escape($this->UTF8ToUTF16BE($txt, false)).')';
-				foreach($this->UTF8StringToArray($txt) as $uni)
-					$this->CurrentFont['subset'][$uni] = $uni;
+                $this->SaveUnicodeSubset($txt);
+                $txt2 = '('.$this->EscapeString($txt).')';
 			}
 			else
 				$txt2='('.str_replace(')','\\)',str_replace('(','\\(',str_replace('\\','\\\\',$txt))).')';
@@ -794,6 +810,21 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 		$this->x += $w;
 }
 
+function GetStringLength($txt)
+{
+    if ($this->unifontSubset) 
+    {
+        $nb = $this->GetUnicodeStringLength($txt);
+    }
+    else
+    {
+        $nb = strlen($s);
+        if($nb>0 && $s[$nb-1]=="\n")
+            $nb--;
+    }
+    return $nb;
+}
+
 function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 {
 	// Output text with automatic or explicit line breaks
@@ -802,15 +833,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 		$w = $this->w-$this->rMargin-$this->x;
 	$wmax = ($w-2*$this->cMargin);
 	$s = str_replace("\r",'',$txt);
-	if ($this->unifontSubset) {
-		$nb=mb_strlen($s, 'utf-8');
-		while($nb>0 && mb_substr($s,$nb-1,1,'utf-8')=="\n")	$nb--;
-	}
-	else {
-		$nb = strlen($s);
-		if($nb>0 && $s[$nb-1]=="\n")
-			$nb--;
-	}
+    $nb = $this->GetStringLength($txt);
 	$b = 0;
 	if($border)
 	{
@@ -839,12 +862,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 	while($i<$nb)
 	{
 		// Get next character
-		if ($this->unifontSubset) {
-			$c = mb_substr($s,$i,1,'UTF-8');
-		}
-		else {
-			$c=$s[$i];
-		}
+        $c = $this->GetSubstring($s, $i, 1);
 		if($c=="\n")
 		{
 			// Explicit line break
@@ -853,12 +871,8 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 				$this->ws = 0;
 				$this->_out('0 Tw');
 			}
-			if ($this->unifontSubset) {
-				$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-			}
-			else {
-				$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-			}
+            $sub = $this->GetSubstring($s,$j,$i-$j);
+            $this->Cell($w,$h,$sub,$b,2,$align,$fill);
 			$i++;
 			$sep = -1;
 			$j = $i;
@@ -891,12 +905,8 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 					$this->ws = 0;
 					$this->_out('0 Tw');
 				}
-				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-				}
-				else {
-					$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-				}
+                $sub = $this->GetSubstring($s,$j,$i-$j);
+                $this->Cell($w,$h,$sub,$b,2,$align,$fill);
 			}
 			else
 			{
@@ -905,12 +915,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 					$this->ws = ($ns>1) ? ($wmax-$ls)/($ns-1) : 0;
 					$this->_out(sprintf('%.3F Tw',$this->ws*$this->k));
 				}
-				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),$b,2,$align,$fill);
-				}
-				else {
-					$this->Cell($w,$h,substr($s,$j,$sep-$j),$b,2,$align,$fill);
-				}
+                $sub = $this->GetSubstring($s,$j,$sep-$j);
 				$i = $sep+1;
 			}
 			$sep = -1;
@@ -932,12 +937,8 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 	}
 	if($border && strpos($border,'B')!==false)
 		$b .= 'B';
-	if ($this->unifontSubset) {
-		$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-	}
-	else {
-		$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-	}
+    $sub = $this->GetSubstring($s,$j,$i-$j);
+    $this->Cell($w,$h,$sub,$b,2,$align,$fill);
 	$this->x = $this->lMargin;
 }
 
@@ -967,21 +968,12 @@ function Write($h, $txt, $link='')
 	while($i<$nb)
 	{
 		// Get next character
-		if ($this->unifontSubset) {
-			$c = mb_substr($s,$i,1,'UTF-8');
-		}
-		else {
-			$c = $s[$i];
-		}
+        $c = $this->GetSubstring($s,$i,1);
 		if($c=="\n")
 		{
 			// Explicit line break
-			if ($this->unifontSubset) {
-				$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),0,2,'',0,$link);
-			}
-			else {
-				$this->Cell($w,$h,substr($s,$j,$i-$j),0,2,'',0,$link);
-			}
+            $sub = $this->GetSubstring($s,$j,$i-$j);
+            $this->Cell($w,$h,$sub,0,2,'',0,$link);
 			$i++;
 			$sep = -1;
 			$j = $i;
@@ -1019,21 +1011,13 @@ function Write($h, $txt, $link='')
 				}
 				if($i==$j)
 					$i++;
-				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),0,2,'',0,$link);
-				}
-				else {
-					$this->Cell($w,$h,substr($s,$j,$i-$j),0,2,'',0,$link);
-				}
+                $sub = $this->GetSubstring($s,$j,$i-$j);
+                $this->Cell($w,$h,$sub,0,2,'',0,$link);
 			}
 			else
 			{
-				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),0,2,'',0,$link);
-				}
-				else {
-					$this->Cell($w,$h,substr($s,$j,$sep-$j),0,2,'',0,$link);
-				}
+                $sub = $this->GetSubstring($s,$j,$sep-$j);
+                $this->Cell($w,$h,$sub,0,2,'',0,$link);
 				$i = $sep+1;
 			}
 			$sep = -1;
@@ -1052,6 +1036,7 @@ function Write($h, $txt, $link='')
 	}
 	// Last chunk
 	if($i!=$j) {
+        #### $sub = $this->GetSubstring($s,$j,???);
 		if ($this->unifontSubset) {
 			$this->Cell($l,$h,mb_substr($s,$j,$i-$j,'UTF-8'),0,0,'',0,$link);
 		}
@@ -2251,10 +2236,28 @@ function UTF8ToUTF16BE($str, $setbom=true) {
 	return $outstr;
 }
 
-// Converts UTF-8 strings to codepoints array
-function UTF8StringToArray($str) {
+protected function SaveUnicodeSubset($str)
+{
+    // Should never get here ...
 }
 
+protected function EscapeUnicodeString($str)
+{
+    // Should never get here ...
+    return '';
+}
+
+protected function GetUnicodeStringLength($str)
+{
+    // Should never get here ...
+    return 0;
+}
+
+function GetUnicodeSubstring($txt , $start, $length = null)
+{
+    // Should never get here ...
+    return '';
+}
 
 // End of class
 }

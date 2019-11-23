@@ -5,6 +5,7 @@
 // define("_SYSTEM_TTFONTS", "C:/Windows/Fonts/");
 
 require('uni_pdf.php');
+use tFPDF\UniPdf;
 
 // Please update these if you change the content of HelloWorld.txt
 $src_file_name = 'HelloWorld.txt';

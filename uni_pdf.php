@@ -1,5 +1,7 @@
 <?php
+namespace tFPDF;
 
+require_once __DIR__ . "/font_handler_unicode.php";
 require_once __DIR__ . "/tfpdf.php";
 require_once __DIR__ . "/ttfonts.php";
 
@@ -23,6 +25,8 @@ class UniPdf extends tFPDF
     const FontUnderline = "U";
 
     protected $m_debug = false;
+
+    private $m_font_handler;
 
     function __construct($orientation = self::OrientPortrait, 
         $units = self::UnitsMillimeters, $page_size= "A4")
@@ -111,12 +115,16 @@ class UniPdf extends tFPDF
                 "FontFiles: $ff\n");
         }
 
+        $this->m_font_handler = new FontHandlerUnicode($this->fonts[$fontkey]);
+
         return true;
     }
 
     // Get width of a string in the current font
     function GetStringWidth($str)
     {
+        return($this->m_font_handler->GetStringWidth($str));
+        /*
         $str = (string)$str;
         $char_widths = &$this->CurrentFont["cw"];
         $width = 0;
@@ -150,11 +158,16 @@ class UniPdf extends tFPDF
         }
 
         return $width * $this->FontSize / 1000;
+        */
     }
 
     // Converts UTF-8 strings to codepoints array
+    // See https://www.unicode.org/versions/Unicode12.0.0/ch03.pdf,
+    // "Table 3-7. Well-Formed UTF-8 Byte Sequences"
     function UTF8StringToArray($str) 
     {
+
+
         $out = array();
         $str_length = strlen($str);
         $i = 0;
@@ -196,4 +209,34 @@ class UniPdf extends tFPDF
         }
         return $out;
     }
+
+    protected function SaveUnicodeSubset($string)
+    {
+        foreach ($this->UTF8StringToArray($string) as $code)
+        {
+            $this->CurrentFont["subset"][$code] = $code;
+        }
+    }
+
+    protected function EscapeUnicodeString($string)
+    {
+        return $this->_escape($this->UTF8ToUTF16BE($string, false));
+    }
+
+    // Get unicode string length, ignoring trailing newlines:
+    protected function GetUnicodeStringLength($string)
+    {
+        $num_bytes = mb_strlen($string, "utf-8");
+        while ($num_bytes > 0 && 
+            mb_substr($string, $num_bytes - 1, 1, "utf-8") == "\n")
+        {
+            --$num_bytes;
+        }
+    }
+
+    function GetUnicodeSubstring($string , $start, $length = null)
+    {
+        return mb_substr($string, $start, $length, "utf-8");
+    }
+
 }

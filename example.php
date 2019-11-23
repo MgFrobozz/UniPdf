@@ -7,17 +7,21 @@
 require('uni_pdf.php');
 use tFPDF\UniPdf;
 
-// Please update these if you change the content of HelloWorld.txt
+// Please update these if you change the content of HelloWorld.txt:
 $src_file_name = 'HelloWorld.txt';
-$pdf_file_name = 'example.pdf';
 $pdf_file_size = '22.1KB';
+
+// Can also use installed system files directly, eg
+// "/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf";
+$italic_font_path = __DIR__ . "/my_fonts/FreeSansOblique.ttf";
+
+$pdf_file_name = 'example.pdf';
 
 $pdf = new UniPdf();
 $pdf->AddPage();
 
 // Add a Unicode font (uses UTF-8)
-$pdf->AddFontUnicode("custom", UniPdf::FontItalic, __DIR__ . "/my_fonts", 
-    "FreeSansOblique.ttf");
+$pdf->AddFontUnicode("custom", UniPdf::FontItalic, $italic_font_path);
 $pdf->SetFont("custom", UniPdf::FontItalic, 14);
 
 // Load a UTF-8 string from a file and print it

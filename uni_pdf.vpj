@@ -122,6 +122,8 @@
             <F N="font/zapfdingbats.php"/>
         </Folder>
         <F N="example.php"/>
+        <F N="font_handler.php"/>
+        <F N="font_handler_unicode.php"/>
         <F N="HelloWorld.txt"/>
         <F N="info.htm"/>
         <F N="README.txt"/>

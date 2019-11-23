@@ -164,7 +164,7 @@ class FontHandlerUnicode
     {
         if (!is_file($font_file_path))
         {
-            throw new Exception(__FUNCTION__ . ": no file '$font_file_path'");
+            throw new \Exception(__FUNCTION__ . ": no file '$font_file_path'");
         }
 
         $ttf = new TTFontFile();

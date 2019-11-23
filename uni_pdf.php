@@ -34,140 +34,11 @@ class UniPdf extends tFPDF
         parent::__construct($orientation, $units, $page_size);
     }
 
-    // Add a true-type unicode font
-    function AddFontUnicode($family, $style, $font_dir_path, $font_file_name)
-    {
-        $family = strtolower($family);
-        $style = strtoupper($style);
-        if ($style=='IB')
-        {
-            $style='BI';
-        }
-
-        $fontkey = $family.$style;
-        if (isset($this->fonts[$fontkey]))
-        {
-            return;
-        }
-
-        $font_file_path = "$font_dir_path/$font_file_name";
-        if (!is_file($font_file_path))
-        {
-            throw new Exception("No file '$font_file_path'");
-            return(false);
-        }
-
-        $ttf = new TTFontFile();
-        $ttf->getMetrics($font_file_path);
-
-        $desc= 
-        [
-            "Ascent" => round($ttf->ascent),
-            "Descent" => round($ttf->descent),
-            "CapHeight" => round($ttf->capHeight),
-            "Flags" => $ttf->flags,
-            "FontBBox" => "[".
-                round($ttf->bbox[0]) . " " .
-                round($ttf->bbox[1]) . " " . 
-                round($ttf->bbox[2]) . " " .
-                round($ttf->bbox[3]) . "]",
-            "ItalicAngle" => $ttf->italicAngle,
-            "StemV" => round($ttf->stemV),
-            "MissingWidth" => round($ttf->defaultWidth),
-        ];
-
-        $sbarr = (!empty($this->AliasNbPages)) ? range(0,57) : range(0,32);
-
-        $this->fonts[$fontkey] = 
-        [
-            "i" => count($this->fonts) + 1, 
-            "type" => "TTF", 
-            "name" => preg_replace("/[ ()]/", "", $ttf->fullName),
-            "desc" => $desc, 
-            "up" => round($ttf->underlinePosition), 
-            "ut" => round($ttf->underlineThickness), 
-            "cw" => $ttf->charWidths, 
-            "ttffile" => $font_file_path, 
-            "fontkey" => $fontkey, 
-            "subset" => $sbarr, 
-            "unifilename" => $font_file_path,
-            "omit_cw127" => true,
-        ];
-
-        $this->FontFiles[$fontkey]=
-        [
-            # "length1" => $originalsize, 
-            "type"=> "TTF", 
-            "ttffile" => $font_file_path,
-        ];
-        $this->FontFiles[$font_file_name] = ["type" => "TTF"];
-
-        if ($this->m_debug)
-        {
-            # Dump except for binary "cw" array:
-            $f_copy = $this->fonts[$fontkey];
-            $f_copy["cw"] = null;
-            $f = print_r($f_copy, true);
-            $ff = print_r($this->FontFiles[$font_file_name], true);
-            print(__FUNCTION__ . 
-                "($family, $style, $font_dir_path, $font_file_name)\n" .
-                "fonts: $f\n" .
-                "FontFiles: $ff\n");
-        }
-
-        $this->m_font_handler = new FontHandlerUnicode($this->fonts[$fontkey]);
-
-        return true;
-    }
-
-    // Get width of a string in the current font
-    function GetStringWidth($str)
-    {
-        return($this->m_font_handler->GetStringWidth($str));
-        /*
-        $str = (string)$str;
-        $char_widths = &$this->CurrentFont["cw"];
-        $width = 0;
-        $unicode = $this->UTF8StringToArray($str);
-
-        foreach ($unicode as $char) 
-        {
-            if (isset($char_widths[$char])) 
-            { 
-                // Extract big-endian uint_16:
-                $width += (ord($char_widths[2 * $char]) << 8) + 
-                    ord($char_widths[2 * $char + 1]); 
-            }
-            else if ($char > 0 && $char < 128 && 
-                isset($char_widths[chr($char)])) 
-            { 
-                $width += $char_widths[chr($char)]; 
-            }
-            else if (isset($this->CurrentFont["desc"]["MissingWidth"])) 
-            { 
-                $width += $this->CurrentFont["desc"]["MissingWidth"]; 
-            }
-            else if (isset($this->CurrentFont["MissingWidth"])) 
-            { 
-                $width += $this->CurrentFont["MissingWidth"]; 
-            }
-            else 
-            { 
-                $width += 500; 
-            }
-        }
-
-        return $width * $this->FontSize / 1000;
-        */
-    }
-
     // Converts UTF-8 strings to codepoints array
     // See https://www.unicode.org/versions/Unicode12.0.0/ch03.pdf,
     // "Table 3-7. Well-Formed UTF-8 Byte Sequences"
     function UTF8StringToArray($str) 
     {
-
-
         $out = array();
         $str_length = strlen($str);
         $i = 0;
@@ -212,6 +83,9 @@ class UniPdf extends tFPDF
 
     protected function SaveUnicodeSubset($string)
     {
+        # debug...
+        # print(__FUNCTION__ . "()\n");
+        # ...debug
         foreach ($this->UTF8StringToArray($string) as $code)
         {
             $this->CurrentFont["subset"][$code] = $code;
@@ -220,12 +94,18 @@ class UniPdf extends tFPDF
 
     protected function EscapeUnicodeString($string)
     {
+        # debug...
+        # print(__FUNCTION__ . "()\n");
+        # ...debug
         return $this->_escape($this->UTF8ToUTF16BE($string, false));
     }
 
     // Get unicode string length, ignoring trailing newlines:
     protected function GetUnicodeStringLength($string)
     {
+        # debug...
+        # print(__FUNCTION__ . "()\n");
+        # ...debug
         $num_bytes = mb_strlen($string, "utf-8");
         while ($num_bytes > 0 && 
             mb_substr($string, $num_bytes - 1, 1, "utf-8") == "\n")
@@ -234,8 +114,19 @@ class UniPdf extends tFPDF
         }
     }
 
-    function GetUnicodeSubstring($string , $start, $length = null)
+    function GetUnicodeSubstring($string, $start, $length = null)
     {
+        # debug...
+        # if ($length > 1)
+        if (false)
+        {
+            if ($start == 0)
+            {
+                throw new \Exception(__FUNCTION__);
+            }
+            print(__FUNCTION__ . "($start, $length)\n");
+        }
+        # ...debug
         return mb_substr($string, $start, $length, "utf-8");
     }
 

@@ -433,7 +433,7 @@ function GetStringWidth($s)
 {
     if (!isset($this->fontHandler))
     {
-        throw new Exception(__FUNCTION__ . ": no font handler");
+        throw new \Exception(__FUNCTION__ . ": no font handler");
     }
     return($this->fontHandler->GetStringWidth($s));
 }
@@ -471,8 +471,60 @@ function GetSubstring($txt, $start, $length = null)
         substr($txt, $start, $length);
 }
 
+private function GetStyleCanonical($style)
+{
+    $style = strtoupper($style);
+    return ($style=='IB') ? self::FontBoldItalic : $style;
+}
+
+// Add a TrueType unicode font
+function AddFontUnicode($family, $style, $font_file_path)
+{
+    $family = strtolower($family);
+    $style = self::GetStyleCanonical(strtoupper($style));
+    $fontkey = $family.$style;
+    if (isset($this->fonts[$fontkey]))
+    {
+        return;
+    }
+
+    $font = FontHandlerUnicode::CreateFontDescription($family, $style, 
+        $font_file_path);
+    $font["subset"] = empty($this->AliasNbPages) ? range(0, 32) : range(0, 57);
+    $font["i"] = count($this->fonts) + 1;
+    $font["fontkey"] = $fontkey;
+    $this->fonts[$fontkey] = $font;
+
+    $this->FontFiles[$fontkey] = 
+    [
+        "length1" => filesize($font_file_path),
+        "type"=> "TTF", 
+        "ttffile" => $font_file_path,
+    ];
+    $this->FontFiles[basename($font_file_path)] = 
+    [
+        "type" => "TTF",
+    ];
+
+    # debug...
+	# $f_copy = $font;
+	# $f_copy["cw"] = null;
+	# $f = print_r($f_copy, true);
+	# $ff = print_r($this->FontFiles, true);
+	# print(__FUNCTION__ . 
+	#     "($family, $style, $font_file_path)\n" .
+	#     "fonts: $f\n" .
+	#     "FontFiles: $ff\n");
+    # ...debug
+}
+
 function AddFont($family, $style='', $file='', $uni=false)
 {
+    if (isset($uni) && $uni)
+    {
+        throw new \Exception(__FUNCTION__ . ": use AddFontUnicode instead");
+    }
+
 	// Add a TrueType, OpenType or Type1 font
 	$family = strtolower($family);
 	$style = strtoupper($style);
@@ -632,12 +684,12 @@ function SetFont($family, $style='', $size=0)
 	if ($this->fonts[$fontkey]['type']=='TTF') 
     { 
         $this->unifontSubset = true; 
-        $fontHandler = new FontHandlerUnicode($this->CurrentFont, $this->FontSize);
+        $this->fontHandler = new FontHandlerUnicode($this->CurrentFont, $this->FontSize);
     }
 	else 
     { 
         $this->unifontSubset = false; 
-        $fontHandler = new FontHandler($this->CurrentFont, $this->FontSize);
+        $this->fontHandler = new FontHandler($this->CurrentFont, $this->FontSize);
     }
 	if($this->page>0)
 		$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
@@ -815,6 +867,9 @@ function GetStringLength($txt)
     if ($this->unifontSubset) 
     {
         $nb = $this->GetUnicodeStringLength($txt);
+        # debug...
+        print(__FUNCTION__ . "() -> $nb\n");
+        # ...debug
     }
     else
     {

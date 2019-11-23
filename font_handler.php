@@ -5,15 +5,15 @@ class FontHandler
 {
     const DefaultFontSize = 10;
 
-    // Font size:
-    private $m_font_size;
     // Widths of glyphs, not scaled by current font size:
     private $m_glyph_widths;
+    // Font size:
+    private $m_font_size;
 
     function __construct($font, $font_size = self::DefaultFontSize)
     {
-        $m_glyph_widths = $font["cw"];
-        $m_font_size = $font_size;
+        $this->m_glyph_widths = $font["cw"];
+        $this->m_font_size = $font_size;
     }
 
     // Get the glyph width of a string
@@ -24,9 +24,9 @@ class FontHandler
         $str_len = strlen($string);
         for ($i = 0; $i < $str_len; $i++)
         {
-            $str_width += $m_glyph_widths[$string[$i]];
+            $str_width += $this->m_glyph_widths[$string[$i]];
         }
-        return $str_width * $m_font_size / 1000;
+        return $str_width * $this->m_font_size / 1000;
     }
 
     // Return string length, not including final newline

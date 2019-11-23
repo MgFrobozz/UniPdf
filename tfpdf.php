@@ -753,10 +753,13 @@ function Link($x, $y, $w, $h, $link)
 	$this->PageLinks[$this->page][] = array($x*$this->k, $this->hPt-$y*$this->k, $w*$this->k, $h*$this->k, $link);
 }
 
-protected function EscapeString($string)
+protected function EscapeString($txt)
 {
-    return ($this->unifontSubset) ? $this->EscapeUnicodeString($string) : 
-        $this->_escape($string);
+    if (!isset($this->fontHandler))
+    {
+        throw new \Exception(__FUNCTION__ . ": no font handler");
+    }
+    return $this->_escape($this->fontHandler->EscapeString($txt));
 }
 
 function Text($x, $y, $txt)
@@ -2308,18 +2311,6 @@ function UTF8ToUTF16BE($str, $setbom=true) {
 protected function SaveUnicodeSubset($str)
 {
     // Should never get here ...
-}
-
-protected function EscapeUnicodeString($str)
-{
-    // Should never get here ...
-    return '';
-}
-
-function GetUnicodeSubstring($txt , $start, $length = null)
-{
-    // Should never get here ...
-    return '';
 }
 
 // End of class

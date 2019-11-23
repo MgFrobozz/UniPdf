@@ -16,7 +16,7 @@ $pdf_file_size = '22.1KB';
 // "/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf";
 $italic_font_path = __DIR__ . "/my_fonts/FreeSansOblique.ttf";
 
-$pdf_file_name = 'example.pdf';
+$pdf_file_name = 'example_out.pdf';
 
 $pdf = new UniPdf();
 $pdf->AddPage();

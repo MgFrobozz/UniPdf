@@ -92,12 +92,4 @@ class UniPdf extends tFPDF
         }
     }
 
-    protected function EscapeUnicodeString($string)
-    {
-        # debug...
-        # print(__FUNCTION__ . "()\n");
-        # ...debug
-        return $this->_escape($this->UTF8ToUTF16BE($string, false));
-    }
-
 }

@@ -24,8 +24,8 @@ class FontHandlerUnicode
 
     function __construct($font, $font_size = self::DefaultFontSize)
     {
-        $this->m_font = $font;
-        $this->m_glyph_widths = $font["cw"];
+        $this->m_font = &$font;
+        $this->m_glyph_widths = &$font["cw"];
         $this->m_font_size = $font_size;
 
         $this->m_missing_width = null;
@@ -47,10 +47,6 @@ class FontHandlerUnicode
     // ("Table 3-7. Well-Formed UTF-8 Byte Sequences")
     function Utf8ToCodepoints($string) 
     {
-        # debug...
-        # print(__FUNCTION__ . "($string)\n");
-        # ...debug
-
         $codes = array();
         $str_length = strlen($string);
         $i = 0;
@@ -119,11 +115,6 @@ class FontHandlerUnicode
             }
         }
 
-        # debug...
-        # $fs = $this->m_font_size;
-        # $w = $str_width * $this->m_font_size / 1000;
-        # print(__FUNCTION__ . "($string, $fs) -> $w\n");
-        # ...debug
         return $str_width * $this->m_font_size / 1000;
     }
 
@@ -149,11 +140,14 @@ class FontHandlerUnicode
         return mb_convert_encoding($string, "UTF-16BE", "UTF-8");
     }
 
-    function SaveCodeSubset($string)
+    // Save the subset of unicode codepoints that were actually used. These are
+    // later written to the pdf file, instead of the entire collection of
+    // codepoints in the font file:
+    function SaveFontSubset($string, &$font)
     {
-        foreach ($this->Utf8ToCodepoints($string) as $code)
+        foreach (self::Utf8ToCodepoints($string) as $code)
         {
-            $this->m_font["subset"][$code] = $code;
+            $font["subset"][$code] = $code;
         }
     }
 

@@ -4,15 +4,12 @@
 // otherwise tFPDF will use [path to tFPDF]/font/unifont/ directory
 // define("_SYSTEM_TTFONTS", "C:/Windows/Fonts/");
 
-require('uni_pdf.php');
-use tFPDF\UniPdf;
+require('tfpdf.php');
 use tFPDF\tFPDF;
 
 // Can also use installed system files directly, eg
 // "/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf";
 $italic_font_path = __DIR__ . "/my_fonts/FreeSansOblique.ttf";
-
-$src_file_name = "lorem_ipsum.txt";
 
 $text = 
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod " .
@@ -24,25 +21,33 @@ $text =
     "mollit anim id est laborum.";
 $pdf_file_name = 'test_out.pdf';
 
-$pdf = new UniPdf();
+$pdf = new tFPDF();
 $pdf->SetTopMargin(50);
 $pdf->SetLeftMargin(50);
 $pdf->AddPage(tFPDF::OrientPortrait, "letter"); 
 
 // Add a Unicode font (uses UTF-8)
-$pdf->AddFontUnicode("custom", tFPDF::FontItalic, $italic_font_path);
-$pdf->SetFont("custom", UniPdf::FontItalic, 12);
+$pdf->AddFontUnicode("custom", tFPDF::StyleItalic, $italic_font_path);
+$pdf->SetFont("custom", tFPDF::StyleItalic, 12);
 
 $width = 100;
 $height = 5;
-$text = file_get_contents($src_file_name);
-
-# $pdf->Write(8,$text);
+$text = file_get_contents("lorem_ipsum.txt");
 
 $pdf->MultiCell($width, $height, $text, tFPDF::BorderFrame, 
     tFPDF::AlignJustify, tFPDF::FillNone);
 
+$pdf->AddPage(tFPDF::OrientPortrait, "letter"); 
+
+$pdf->SetTopMargin(10);
+$pdf->SetLeftMargin(10);
+
+// Load a UTF-8 string from a file and print it
+$pdf->Write(8, "\n");
+$text = file_get_contents("HelloWorld.txt");
+$pdf->Write(8, $text);
+
 $pdf->Output($pdf_file_name, 'F');
-print("Converted $src_file_name -> '$pdf_file_name'\n");
+print("Converted -> '$pdf_file_name'\n");
 
 ?>

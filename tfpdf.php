@@ -18,26 +18,37 @@ require_once __DIR__ . "/font_handler_unicode.php";
 class tFPDF
 {
 
-const AlignLeft = "L";
+// Use with $align:
 const AlignCenter = "C";
-const AlignRight = "R";
 // Stretch to left and right margins:
 const AlignJustify = "J";
+const AlignLeft = "L";
+const AlignRight = "R";
 
-const BorderNone = 0;
+// Use with $border:
 const BorderFrame = 1;
+const BorderNone = 0;
 
+// Use with $fill:
 const FillNone = false;
 const FillSolid = true;
 
-const FontNormal = "";
-const FontBold = "B";
-const FontItalic = "I";
-const FontBoldItalic = "BI";
-const FontUnderline = "U";
-
+// Use with $orientation:
 const OrientLandscape = "L";
 const OrientPortrait = "P";
+
+// Use with $style:
+const StyleBold = "B";
+const StyleBoldItalic = "BI";
+const StyleNormal = "";
+const StyleItalic = "I";
+const StyleUnderline = "U";
+
+// Use with $units:
+const UnitsCentimeters = "cm";
+const UnitsInches = "in";
+const UnitsMillimeters = "mm";
+const UnitsPoints = "pt";
 
 var $unifontSubset;
 var $page;               // current page number
@@ -450,6 +461,27 @@ function SetTextColor($r, $g=null, $b=null)
 	$this->ColorFlag = ($this->FillColor!=$this->TextColor);
 }
 
+function SaveFontSubset($txt)
+{
+    if (!isset($this->fontHandler))
+    {
+        throw new \Exception(__FUNCTION__ . ": no font handler");
+    }
+    $this->fontHandler->SaveFontSubset($txt, $this->CurrentFont);
+
+    # debug...
+    # if ($this->unifontSubset)
+    # {
+    #     $this::SaveUnicodeSubset($txt);
+    #     return;
+    # }
+    # 
+    # $len = $this->fontHandler->GetStringLength($txt);
+    # $size = count($this->CurrentFont["subset"]);
+    # print("SaveFontSubset() -> len $len size $size\n");
+    # ...debug
+}
+
 function GetStringWidth($s)
 {
     if (!isset($this->fontHandler))
@@ -707,7 +739,8 @@ function SetFont($family, $style='', $size=0)
 	if ($this->fonts[$fontkey]['type']=='TTF') 
     { 
         $this->unifontSubset = true; 
-        $this->fontHandler = new FontHandlerUnicode($this->CurrentFont, $this->FontSize);
+        $this->fontHandler = new FontHandlerUnicode($this->fonts[$fontkey], 
+            $this->FontSize);
     }
 	else 
     { 
@@ -765,7 +798,7 @@ protected function EscapeString($txt)
 function Text($x, $y, $txt)
 {
 	// Output a string
-    $this->SaveUnicodeSubset($txt);
+    $this->SaveFontSubset($txt);
 	$txt2 = '('.$this->EscapeString($txt).')';
 	$s = sprintf('BT %.2F %.2F Td %s Tj ET',$x*$this->k,($this->h-$y)*$this->k,$txt2);
 	if($this->underline && $txt!='')
@@ -840,7 +873,7 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 
 		// If multibyte, Tw has no effect - do word spacing using an adjustment before each space
 		if ($this->ws && $this->unifontSubset) {
-            $this->SaveUnicodeSubset($txt);
+            $this->SaveFontSubset($txt);
             $space = $this->EscapeString(' ');
 			$s .= sprintf('BT 0 Tw %.2F %.2F Td [',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k);
 			$t = explode(' ',$txt);
@@ -860,7 +893,7 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 		else {
 			if ($this->unifontSubset)
 			{
-                $this->SaveUnicodeSubset($txt);
+                $this->SaveFontSubset($txt);
                 $txt2 = '('.$this->EscapeString($txt).')';
 			}
 			else
@@ -2306,11 +2339,6 @@ function UTF8ToUTF16BE($str, $setbom=true) {
 	}
 	$outstr .= mb_convert_encoding($str, 'UTF-16BE', 'UTF-8');
 	return $outstr;
-}
-
-protected function SaveUnicodeSubset($str)
-{
-    // Should never get here ...
 }
 
 // End of class

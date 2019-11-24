@@ -4,8 +4,7 @@
 // otherwise tFPDF will use [path to tFPDF]/font/unifont/ directory
 // define("_SYSTEM_TTFONTS", "C:/Windows/Fonts/");
 
-require('uni_pdf.php');
-use tFPDF\UniPdf;
+require('tfpdf.php');
 use tFPDF\tfPDF;
 
 // Please update these if you change the content of HelloWorld.txt:
@@ -18,12 +17,12 @@ $italic_font_path = __DIR__ . "/my_fonts/FreeSansOblique.ttf";
 
 $pdf_file_name = 'example_out.pdf';
 
-$pdf = new UniPdf();
+$pdf = new tFPDF();
 $pdf->AddPage();
 
 // Add a Unicode font (uses UTF-8)
-$pdf->AddFontUnicode("custom", tFPDF::FontItalic, $italic_font_path);
-$pdf->SetFont("custom", UniPdf::FontItalic, 14);
+$pdf->AddFontUnicode("custom", tFPDF::StyleItalic, $italic_font_path);
+$pdf->SetFont("custom", tFPDF::StyleItalic, 14);
 
 // Load a UTF-8 string from a file and print it
 $txt = file_get_contents($src_file_name);

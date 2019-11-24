@@ -44,7 +44,7 @@ class FontHandler
         return substr($string, $start, $length);
     }
 
-    function SaveCodeSubset($string)
+    function SaveFontSubset($string, &$font)
     {
         // Nothing to do ...
     }

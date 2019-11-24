@@ -6,8 +6,9 @@ namespace tFPDF;
 // Version 12.0 – Core Specification
 
 require_once __DIR__ . "/ttfonts.php";
+require_once __DIR__ . "/font_handler.php";
 
-class FontHandlerUnicode
+class FontHandlerUnicode extends FontHandler
 {
     const DefaultMissingWidth = 500;
     const DefaultFontSize = 10;
@@ -135,9 +136,10 @@ class FontHandlerUnicode
         return mb_substr($string, $start, $length, "utf-8");
     }
 
-    function EscapeString($string)
+    function EscapeString($string, $escapeMap)
     {
-        return mb_convert_encoding($string, "UTF-16BE", "UTF-8");
+        $string = mb_convert_encoding($string, "UTF-16BE", "UTF-8");
+        return parent::EscapeString($string, $escapeMap);
     }
 
     // Save the subset of unicode codepoints that were actually used. These are

@@ -50,7 +50,6 @@ const UnitsInches = "in";
 const UnitsMillimeters = "mm";
 const UnitsPoints = "pt";
 
-var $unifontSubset;
 var $page;               // current page number
 var $n;                  // current object number
 var $offsets;            // array of object offsets
@@ -461,34 +460,50 @@ function SetTextColor($r, $g=null, $b=null)
 	$this->ColorFlag = ($this->FillColor!=$this->TextColor);
 }
 
-function SaveFontSubset($txt)
+function GetEscapeMap()
+{
+    // Mapping needed to escape characters for pdf:
+    return
+    [
+        '\\' => '\\\\',
+        '(' => '\\(',
+        ')' => '\\)',
+        "\r" => '\\r',
+    ];
+}
+
+function GetFontHandler()
 {
     if (!isset($this->fontHandler))
     {
         throw new \Exception(__FUNCTION__ . ": no font handler");
     }
-    $this->fontHandler->SaveFontSubset($txt, $this->CurrentFont);
+    return $this->fontHandler;
+}
 
-    # debug...
-    # if ($this->unifontSubset)
-    # {
-    #     $this::SaveUnicodeSubset($txt);
-    #     return;
-    # }
-    # 
-    # $len = $this->fontHandler->GetStringLength($txt);
-    # $size = count($this->CurrentFont["subset"]);
-    # print("SaveFontSubset() -> len $len size $size\n");
-    # ...debug
+function SaveFontSubset($txt)
+{
+    $this->GetFontHandler()->SaveFontSubset($txt, $this->CurrentFont);
 }
 
 function GetStringWidth($s)
 {
-    if (!isset($this->fontHandler))
-    {
-        throw new \Exception(__FUNCTION__ . ": no font handler");
-    }
-    return($this->fontHandler->GetStringWidth($s));
+    return($this->GetFontHandler()->GetStringWidth($s));
+}
+
+function GetSubstring($string, $start, $length = null)
+{
+    return $this->GetFontHandler()->GetSubstring($string, $start, $length);
+}
+
+protected function EscapeString($txt)
+{
+    return $this->GetFontHandler()->EscapeString($txt, $this->GetEscapeMap());
+}
+
+function GetStringLength($txt)
+{
+    return $this->GetFontHandler()->GetStringLength($txt);
 }
 
 function SetLineWidth($width)
@@ -515,15 +530,6 @@ function Rect($x, $y, $w, $h, $style='')
 	else
 		$op = 'S';
 	$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->k,($this->h-$y)*$this->k,$w*$this->k,-$h*$this->k,$op));
-}
-
-function GetSubstring($string, $start, $length = null)
-{
-    if (!isset($this->fontHandler))
-    {
-        throw new \Exception(__FUNCTION__ . ": no font handler");
-    }
-    return $this->fontHandler->GetSubstring($string, $start, $length);
 }
 
 private function GetStyleCanonical($style)
@@ -786,15 +792,6 @@ function Link($x, $y, $w, $h, $link)
 	$this->PageLinks[$this->page][] = array($x*$this->k, $this->hPt-$y*$this->k, $w*$this->k, $h*$this->k, $link);
 }
 
-protected function EscapeString($txt)
-{
-    if (!isset($this->fontHandler))
-    {
-        throw new \Exception(__FUNCTION__ . ": no font handler");
-    }
-    return $this->_escape($this->fontHandler->EscapeString($txt));
-}
-
 function Text($x, $y, $txt)
 {
 	// Output a string
@@ -919,15 +916,6 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 	}
 	else
 		$this->x += $w;
-}
-
-function GetStringLength($txt)
-{
-    if (!isset($this->fontHandler))
-    {
-        throw new \Exception(__FUNCTION__ . ": no font handler");
-    }
-    return $this->fontHandler->GetStringLength($txt);
 }
 
 function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
@@ -1441,12 +1429,13 @@ function _loadfont($font)
 
 function _escape($s)
 {
-	// Escape special characters in strings
-	$s = str_replace('\\','\\\\',$s);
-	$s = str_replace('(','\\(',$s);
-	$s = str_replace(')','\\)',$s);
-	$s = str_replace("\r",'\\r',$s);
-	return $s;
+    // Escape special characters in strings
+    $escapeSeqs = $this->GetEscapeMap();
+    foreach ($escapeSeqs as $old => $new)
+    {
+        $s = str_replace($old, $new, $s);
+    }
+    return $s;
 }
 
 function _textstring($s)

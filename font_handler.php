@@ -49,9 +49,12 @@ class FontHandler
         // Nothing to do ...
     }
 
-    function EscapeString($string)
+    function EscapeString($string, $escapeMap)
     {
-        // Nothing to do ...
+        foreach ($escapeMap as $old => $new)
+        {
+            $string = str_replace($old, $new, $string);
+        }
         return $string;
     }
 

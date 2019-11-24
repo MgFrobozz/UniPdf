@@ -22,30 +22,63 @@ $text =
 $pdf_file_name = 'test_out.pdf';
 
 $pdf = new tFPDF();
-$pdf->SetTopMargin(50);
-$pdf->SetLeftMargin(50);
-$pdf->AddPage(tFPDF::OrientPortrait, "letter"); 
 
 // Add a Unicode font (uses UTF-8)
 $pdf->AddFontUnicode("custom", tFPDF::StyleItalic, $italic_font_path);
 $pdf->SetFont("custom", tFPDF::StyleItalic, 12);
 
-$width = 100;
-$height = 5;
 $text = file_get_contents("lorem_ipsum.txt");
-
-$pdf->MultiCell($width, $height, $text, tFPDF::BorderFrame, 
-    tFPDF::AlignJustify, tFPDF::FillNone);
+$width = 80;
+$line_height = 5;
 
 $pdf->AddPage(tFPDF::OrientPortrait, "letter"); 
 
-$pdf->SetTopMargin(10);
-$pdf->SetLeftMargin(10);
+$title = "BorderFrame, AlignJustify, FillNone";
+$pdf->SetXY(20, 10);
+$pdf->MultiCell($width, $line_height, $title, tFPDF::BorderNone, 
+    tFPDF::AlignJustify, tFPDF::FillNone);
+$pdf->SetX(20);
+$pdf->MultiCell($width, $line_height, $text, tFPDF::BorderFrame, 
+    tFPDF::AlignJustify, tFPDF::FillNone);
+
+$title = "BorderFrame, AlignLeft, FillNone";
+$pdf->SetXY(120, 10);
+$pdf->MultiCell($width, $line_height, $title, tFPDF::BorderNone, 
+    tFPDF::AlignJustify, tFPDF::FillNone);
+$pdf->SetX(120);
+$pdf->MultiCell($width, $line_height, $text, tFPDF::BorderFrame, 
+    tFPDF::AlignLeft, tFPDF::FillNone);
+
+$title = "BorderFrame, AlignRight, FillNone";
+$pdf->SetLineWidth(0.5);
+$pdf->SetXY(20, 100);
+$pdf->MultiCell($width, $line_height, $title, tFPDF::BorderNone, 
+    tFPDF::AlignJustify, tFPDF::FillNone);
+$pdf->SetX(20);
+$pdf->MultiCell($width, $line_height, $text, tFPDF::BorderFrame, 
+    tFPDF::AlignRight, tFPDF::FillNone);
+
+$title = "BorderNone, AlignRight, FillSolid";
+$pdf->SetFillColor(200, 200, 255);
+$pdf->SetLineWidth(0.75);
+$pdf->SetXY(120, 100);
+$pdf->MultiCell($width, $line_height, $title, tFPDF::BorderNone, 
+    tFPDF::AlignJustify, tFPDF::FillNone);
+$pdf->SetX(120);
+$pdf->MultiCell($width, $line_height, $text, tFPDF::BorderNone, 
+    tFPDF::AlignJustify, tFPDF::FillSolid);
+
+$pdf->AddPage(tFPDF::OrientPortrait, "letter"); 
+$pdf->SetMargins(10, 10);
+$pdf->SetXY(10, 10);
+
+$line_height = 8;
+
+$pdf->SetFont("custom", tFPDF::StyleItalic, 14);
 
 // Load a UTF-8 string from a file and print it
-$pdf->Write(8, "\n");
 $text = file_get_contents("HelloWorld.txt");
-$pdf->Write(8, $text);
+$pdf->Write($line_height, $text);
 
 $pdf->Output($pdf_file_name, 'F');
 print("Converted -> '$pdf_file_name'\n");

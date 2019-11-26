@@ -17,7 +17,7 @@ $pdf->AddPage();
 
 // Add a Unicode font (uses UTF-8). Can also use installed system files 
 // directly (eg /usr/share/fonts/truetype/freefont/FreeSans.ttf)
-$dvs_normal_font_path = __DIR__ . "/font/unifont/DejaVuSans.ttf";
+$dvs_normal_font_path = __DIR__ . "/font/unifont/DejaVuSansCondensed.ttf";
 
 $pdf->AddFontUnicode("dvs", tFPDF::StyleNormal, $dvs_normal_font_path);
 $pdf->SetFont("dvs", tFPDF::StyleNormal, 14);

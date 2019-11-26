@@ -71,11 +71,11 @@ $pdf->SetX(120);
 $pdf->MultiCell($width, $line_height, $lorem_ipsum, tFPDF::BorderNone, 
     tFPDF::AlignJustify, tFPDF::FillSolid);
 
-$title = "BorderNone, AlignJustify, FillSolid, Italic";
+$pdf->SetFont("fs", tFPDF::StyleNormal, 12);
+$title = "BorderNone, AlignJustify, FillSolid, Normal";
 $pdf->SetXY(20, 190);
 $pdf->MultiCell($width, $line_height, $title, tFPDF::BorderNone, 
     tFPDF::AlignJustify, tFPDF::FillNone);
-$pdf->SetFont("fs", tFPDF::StyleNormal, 12);
 $pdf->SetX(20);
 $pdf->MultiCell($width, $line_height, $lorem_ipsum, tFPDF::BorderNone, 
     tFPDF::AlignJustify, tFPDF::FillNone);
